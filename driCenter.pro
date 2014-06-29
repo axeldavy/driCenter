@@ -18,4 +18,4 @@ HEADERS += \
     systemanalysis.h \
     cardinfo.h
 
-LIBS += -ludev -lEGL -lGL
+LIBS += -ludev -lEGL -lGL -lX11
