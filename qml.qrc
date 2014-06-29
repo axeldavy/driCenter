@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>CategoryChooser.qml</file>
+        <file>WindowContent.qml</file>
+    </qresource>
+</RCC>
