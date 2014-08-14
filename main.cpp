@@ -35,7 +35,7 @@
 
 #include "systemanalysis.h"
 #include "cardinfo.h"
-
+#include "drimodel.h"
 
 int main(int argc, char *argv[])
 {
@@ -43,6 +43,7 @@ int main(int argc, char *argv[])
 
     CardModel model;
     SystemAnalysis system;
+    DriModel drimodel;
     for (int i=0; i<system.getCardsNumber();i++)
         model.addCard(system.getCard(i));
 
@@ -51,6 +52,7 @@ int main(int argc, char *argv[])
     qRegisterMetaType<CardInfo*>();
     ctxt->setContextProperty("cardmenu", &model);
     ctxt->setContextProperty("systemAnalysis", &system);
+    ctxt->setContextProperty("drimodel", &drimodel);
     engine.load(QUrl(QStringLiteral("qrc:///main.qml")));
 
     return app.exec();

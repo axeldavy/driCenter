@@ -113,13 +113,13 @@ void CardInfo::fillEGLInfo()
     extensions = eglQueryString(dpy, EGL_EXTENSIONS);
     eglBindAPI(EGL_OPENGL_API);
     m_egl_info += "EGL version: ";
-    m_egl_info += QString::number(major);
+    /*m_egl_info += QString::number(major);
     m_egl_info += '.';
     m_egl_info += QString::number(minor);
     m_egl_info += "\nversion string: ";
     m_egl_info += version;
     m_egl_info += "\nEGL extensions: ";
-    m_egl_info += extensions;
+    m_egl_info += extensions;*/
     if (eglChooseConfig(dpy, config_attribs, configs, 1, &count) == EGL_FALSE || count != 1) {
        return;
     }

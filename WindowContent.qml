@@ -27,8 +27,7 @@ import QtQuick 2.0
 import QtQuick.Controls 1.2
 
 Rectangle {
-    width: 600
-    height: 400
+    anchors.fill: parent
 
     Text {
         id: text1
@@ -42,8 +41,35 @@ Rectangle {
     ComboBox {
         id: comboBox1
         anchors.right: parent.right
+        anchors.rightMargin: 3
+        model: ["i965", "radeonsi"]
         y: 18
         opacity: 0
+        onCurrentIndexChanged: {
+            drimodel.driver = model[currentIndex]
+        }
+    }
+
+    ComboBox {
+        id: comboBox2
+        anchors.left: parent.left
+        anchors.leftMargin: 3
+        model: ListModel {
+            id: comboBox2items
+            ListElement { text: "All Apps" }
+            ListElement { text: "Add New" }
+        }
+        y: 18
+        enabled: false
+        opacity: 0
+        onCurrentIndexChanged: {
+            if (currentIndex == count - 1) {
+                var newComponent = Qt.createComponent("AddAppWindow.qml")
+                var windownewapp = newComponent.createObject()
+                currentIndex = 0
+            }
+            drimodel.application = comboBox2items.get(currentIndex).text
+        }
     }
 
     Text {
@@ -74,20 +100,35 @@ Rectangle {
         opacity: 0
     }
 
+    ContentDri {
+        id: contentDri1
+        opacity: 0
+    }
+
     states: [
         State {
             name: "Configure"
+
             PropertyChanges {
-                target: text1
-                x: 29
-                y: 58
-                width: 543
-                height: 322
+                target: comboBox1
                 opacity: 1
             }
 
             PropertyChanges {
-                target: comboBox1
+                target: comboBox2
+                opacity: 1
+                enabled: true
+            }
+
+            PropertyChanges {
+                target: contentDri1
+                x: 29
+                y: 58
+                anchors.fill: parent
+                anchors.bottomMargin: 15
+                anchors.leftMargin: 17
+                anchors.rightMargin: 8
+                anchors.topMargin: 64
                 opacity: 1
             }
         },
@@ -131,10 +172,6 @@ Rectangle {
                 opacity: 1
             }
 
-            PropertyChanges {
-                target: textArea1
-                opacity: 1
-            }
         },
         State {
             name: "Card"

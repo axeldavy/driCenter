@@ -72,33 +72,32 @@ ApplicationWindow {
         ListElement { name: "System Info" }
     }
 
-    Column {
+
+    ListView {
         id: leftColumn
+        orientation: ListView.Vertical
         x: 0
         y: 0
         width: 200
         anchors.top: toolbar.bottom
         anchors.bottom: parent.bottom
-        ListView {
-            orientation: ListView.Vertical
-            anchors.fill: parent
-            focus: true
-            highlight: Rectangle { color: "steelblue" }
-            highlightMoveVelocity: 9999999
-            model: categories
-            delegate: CategoryChooser {}
-            onCurrentIndexChanged:  {
-                if (currentIndex == 0)
-                    windowContent.state="Configure"
-                else if (currentIndex == 1)
-                    windowContent.state="GL"
-                else if (currentIndex == 2)
-                    windowContent.state="Card"
-                else if (currentIndex == 3)
-                    windowContent.state="System"
-            }
-         }
+        focus: true
+        highlight: Rectangle { color: "steelblue" }
+        highlightMoveVelocity: 9999999
+        model: categories
+        delegate: CategoryChooser {}
+        onCurrentIndexChanged:  {
+            if (currentIndex == 0)
+                windowContent.state="Configure"
+            else if (currentIndex == 1)
+                windowContent.state="GL"
+            else if (currentIndex == 2)
+                windowContent.state="Card"
+            else if (currentIndex == 3)
+                windowContent.state="System"
+        }
     }
+
 
     WindowContent {
         id: windowContent
@@ -111,5 +110,32 @@ ApplicationWindow {
         anchors.top: toolbar.bottom
         anchors.topMargin: 0
         state: "Configure"
+    }
+
+    MouseArea {
+        id: mainMouseArea
+        anchors.fill: parent
+        acceptedButtons: Qt.NoButton
+        hoverEnabled: true
+        onPositionChanged: optionhelpwindow.opacity = 0
+    }
+
+    Rectangle {
+        id: optionhelpwindow
+        x: applicationWindow1.width/2 - width/2
+        y: applicationWindow1.height/2 - height/2
+        width: optionhelpwindowtext.width + 6
+        height: optionhelpwindowtext.height + 6
+        border.width: 1
+        border.color: "dark gray"
+        radius: 5
+        color: "light gray"
+        Text{
+            id: optionhelpwindowtext;
+            x: 3
+            y: 3
+            text:qsTr("fffffffffffffblabli\nblabli")
+        }
+        opacity: 0
     }
 }

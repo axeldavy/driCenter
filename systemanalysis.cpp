@@ -40,7 +40,7 @@ SystemAnalysis::SystemAnalysis()
     assert(udev);
 
     // Detect available cards for prime
-    e = udev_enumerate_new(udev);
+    /*e = udev_enumerate_new(udev);
     udev_enumerate_add_match_subsystem(e, "drm");
     udev_enumerate_add_match_sysname(e, "render*");
 
@@ -55,11 +55,11 @@ SystemAnalysis::SystemAnalysis()
             found = true;
             this->addCard(strdup(id_path_tag_tmp));
         }
-        udev_device_unref(device);
+        //udev_device_unref(device);
     }
     // If there is no render-nodes, or they don't have ID_PATH_TAG,
     // don't care about more than one gpu.
-    if (!found){
+    */if (!found){
         this->addCard("undefined");
     }
 }

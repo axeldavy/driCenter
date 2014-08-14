@@ -3,5 +3,8 @@
         <file>main.qml</file>
         <file>CategoryChooser.qml</file>
         <file>WindowContent.qml</file>
+        <file>ContentDri.qml</file>
+        <file>DriCase.qml</file>
+        <file>AddAppWindow.qml</file>
     </qresource>
 </RCC>

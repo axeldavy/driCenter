@@ -4,7 +4,9 @@ QT += qml quick widgets
 
 SOURCES += main.cpp \
     systemanalysis.cpp \
-    cardinfo.cpp
+    cardinfo.cpp \
+    drimodel.cpp \
+    drixml.cpp
 
 RESOURCES += qml.qrc
 
@@ -16,6 +18,10 @@ include(deployment.pri)
 
 HEADERS += \
     systemanalysis.h \
-    cardinfo.h
+    cardinfo.h \
+    drimodel.h \
+    drixml.h
 
 LIBS += -ludev -lEGL -lGL -lX11
+
+OTHER_FILES +=
