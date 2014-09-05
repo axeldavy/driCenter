@@ -91,8 +91,10 @@ Window {
         anchors.top: execrect.bottom
         anchors.left: execenter.right
         onClicked: {
-            comboBox2.model.insert(comboBox2.count-1, {"text": nametext.text})
-            comboBox2.currentIndex = comboBox2.count-2
+            var index = comboBox2.count-1
+            appNames.insert(index, {"text": nametext.text})
+            appExecs.insert(index, {"text": exectext.text})
+            comboBox2.currentIndex = index
             helpwindow.destroy()
         }
     }

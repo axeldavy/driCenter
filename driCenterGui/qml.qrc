@@ -6,5 +6,7 @@
         <file>ContentDri.qml</file>
         <file>DriCase.qml</file>
         <file>AddAppWindow.qml</file>
+        <file>ContentGLinfo.qml</file>
+        <file>ContentApp.qml</file>
     </qresource>
 </RCC>

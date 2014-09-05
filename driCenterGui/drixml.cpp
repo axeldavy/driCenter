@@ -75,7 +75,7 @@ DescriptionLangInfo::DescriptionLangInfo(QXmlStreamReader *xml)
     } while (xml->readNextStartElement());
 }
 
-QList<QString> DescriptionLangInfo::GetEnumMenu()
+QList<QString> DescriptionLangInfo::GetEnumMenu(int min_valid, int max_valid)
 {
     QList<QString> ret;
 
@@ -83,6 +83,11 @@ QList<QString> DescriptionLangInfo::GetEnumMenu()
     {
         EnumLangInfo *enu = enum_info.at(i);
         ret.append(enu->value + ": " + enu->text);
+    }
+    if (enum_info.length() == 0) {
+        for (int i = min_valid; i <= max_valid; i++)
+            ret.append(QString::number(i));
+        return ret;
     }
     return ret;
 }
@@ -187,21 +192,24 @@ OptionType DriOptionInfo::GetType()
 
 QList<QString> DriOptionInfo::GetEnumMenu(QString lang)
 {
-
+    if (type != OptionEnum) {
+        QList<QString> ret;
+        return ret;
+    }
     for (int i = 0; i < descriptions.length(); i++)
     {
         DescriptionLangInfo *description = descriptions.at(i);
         if (description->language == lang)
-            return description->GetEnumMenu();
+            return description->GetEnumMenu(min_valid, max_valid);
     }
     for (int i = 0; i < descriptions.length(); i++)
     {
         DescriptionLangInfo *description = descriptions.at(i);
         if (description->language == "en")
-            return description->GetEnumMenu();
+            return description->GetEnumMenu(min_valid, max_valid);
     }
     DescriptionLangInfo *description = descriptions.at(0);
-    return description->GetEnumMenu();
+    return description->GetEnumMenu(min_valid, max_valid);
 }
 
 // DriOptionsSectionInfo
@@ -316,10 +324,13 @@ void DriOptionValue::insertList(QList<DriOptionValue *> *options, DriOptionValue
     {
         DriOptionValue *option = options->at(i);
         if (option->name == new_option->name) {
-            if (option->value != new_option->value)
-                throw "option defined two times with different value";
-            else
-                option->value = new_option->value;
+            //if (option->value != new_option->value)
+            //    throw "option defined two times with different value";
+            //else
+            // When we read /etc/.drirc and then ~/.drirc,
+            // some options might be defined two times.
+            // Only consider the later definition
+            option->value = new_option->value;
             delete new_option;
             return;
         }
@@ -379,6 +390,9 @@ DriApplication::DriApplication(QString executable, QString name)
 {
     this->executable = executable;
     this->name = name;
+    if (name.isNull() && !executable.isNull()) {
+        this->name = QString(executable);
+    }
     options.clear();
 }
 
@@ -396,6 +410,19 @@ DriApplication::DriApplication(QXmlStreamReader *xml)
         executable = attributes.value("executable").toString();
     else
         executable.clear();
+
+    if (name.isNull() && !executable.isNull()) {
+        std::cout << "application found with no name. One has been given.";
+        name = QString(executable);
+    }
+
+    if (!name.isNull() && executable.isNull()) {
+        std::cout << "application found with no executable. Options ignored";
+        name.clear();
+        while (xml->readNextStartElement())
+            xml->skipCurrentElement();
+        return;
+    }
 
     while (xml->readNextStartElement()) {
         if (xml->name() == "option")
@@ -449,9 +476,7 @@ void DriApplication::insertList(QList<DriApplication *> *applications, DriApplic
     for (int i = 0; i < applications->length(); i++)
     {
         DriApplication *application = applications->at(i);
-        if (application->name == new_application->name) {
-            if (application->executable != new_application->executable)
-                throw "application defined two times with different executable";
+        if (application->executable == new_application->executable) {
             DriOptionValue::MergeLists(&application->options, &new_application->options);
             delete new_application;
             return;
@@ -465,12 +490,12 @@ void DriApplication::RemoveFromList(QList<DriApplication *> *applications, DriAp
     applications->removeAll(application);
 }
 
-void DriApplication::RemoveFromList(QList<DriApplication *> *applications, QString name)
+void DriApplication::RemoveFromList(QList<DriApplication *> *applications, QString executable)
 {
     for (int i = 0; i < applications->length(); i++)
     {
         DriApplication *application = applications->at(i);
-        if (application->name == name) {
+        if (application->executable == executable) {
             applications->removeAt(i);
             delete application;
             return;
@@ -530,29 +555,71 @@ QList<DriOptionValue> *DriApplication::GetOptions()
     return ret;
 }
 
-void DriApplication::GetOptionsMatch(QList<QString> options_names, QList<DriOptionValue> **matches, QList<DriOptionValue> **non_matches)
+//void DriApplication::GetOptionsMatch(QList<QString> options_names, QList<DriOptionValue> **matches, QList<DriOptionValue> **non_matches)
+//{
+//    *matches = new QList<DriOptionValue>();
+//    (*matches)->clear();
+//    *non_matches = new QList<DriOptionValue>();
+//    (*non_matches)->clear();
+//    qSort(options_names.begin(), options_names.end());
+//    for (int option_name_index = 0, current_name_index = 0; option_name_index < options_names.count() && current_name_index < options.count();) {
+//        QString option_name = options_names[option_name_index];
+//        QString *current_name, *current_value;
+//        DriOptionValue *option = options[current_name_index];
+//        option->GetValues(&current_name, &current_value);
+//        if (*current_name == option_name) {
+//            (*matches)->append(DriOptionValue(*option));
+//            current_name_index++;
+//            option_name_index++;
+//        } else if (*current_name < option_name) {
+//            (*non_matches)->append(DriOptionValue(*option));
+//            current_name_index++;
+//        } else {
+//            option_name_index++;
+//        }
+
+//    }
+//}
+
+void DriApplication::GetOptionsMatch(QList<QString> options_names, QList<QString> **matches,
+                                     QList<QString> **non_matches, QList<QString> **remaining)
 {
-    *matches = new QList<DriOptionValue>();
+    int option_name_index = 0, current_name_index = 0;
+    *matches = new QList<QString>();
     (*matches)->clear();
-    *non_matches = new QList<DriOptionValue>();
+    *non_matches = new QList<QString>();
     (*non_matches)->clear();
+    *remaining = new QList<QString>();
+    (*remaining)->clear();
     qSort(options_names.begin(), options_names.end());
-    for (int option_name_index = 0, current_name_index = 0; option_name_index < options_names.count() && current_name_index < options.count();) {
+    for (; option_name_index < options_names.count() && current_name_index < options.count();) {
         QString option_name = options_names[option_name_index];
         QString *current_name, *current_value;
         DriOptionValue *option = options[current_name_index];
         option->GetValues(&current_name, &current_value);
         if (*current_name == option_name) {
-            (*matches)->append(DriOptionValue(*option));
+            (*matches)->append(*current_name);
             current_name_index++;
             option_name_index++;
         } else if (*current_name < option_name) {
-            (*non_matches)->append(DriOptionValue(*option));
+            (*non_matches)->append(*current_name);
             current_name_index++;
         } else {
+            (*remaining)->append(option_name);
             option_name_index++;
         }
-
+    }
+    for (;current_name_index < options.count();current_name_index++)
+    {
+        QString *current_name, *current_value;
+        DriOptionValue *option = options[current_name_index];
+        option->GetValues(&current_name, &current_value);
+        (*non_matches)->append(*current_name);
+    }
+    for (;option_name_index < options_names.count();option_name_index++)
+    {
+        QString option_name = options_names[option_name_index];
+        (*remaining)->append(option_name);
     }
 }
 
@@ -698,19 +765,45 @@ bool DriDriver::GetScreen(int *screen)
     return true;
 }
 
-bool DriDriver::GetApplication(QString name, DriApplication **application)
+bool DriDriver::GetApplication(QString executable, DriApplication **application)
 {
     for (int i = 0; i < applications.length(); i++) {
         DriApplication *application_current = applications.at(i);
-        QString *application_name;
-        if ((!application_current->GetName(&application_name) &&
-            name.isNull()) ||
-            (name == *application_name)) {
+        QString *application_exec;
+        bool is_null_app_exec = !application_current->GetExecutable(&application_exec);
+        if ((is_null_app_exec && executable.isNull()) ||
+            (!is_null_app_exec && executable == *application_exec)) {
             *application = application_current;
             return true;
         }
     }
     return false;
+}
+
+QList<QString> DriDriver::GetApplicationsNames()
+{
+    QList<QString> ret;
+
+    for (int i = 0; i < applications.length(); i++) {
+        DriApplication *application = applications.at(i);
+        QString *application_name;
+        if (application->GetName(&application_name))
+            ret.append(*application_name);
+    }
+    return ret;
+}
+
+QList<QString> DriDriver::GetApplicationsExecutables()
+{
+    QList<QString> ret;
+
+    for (int i = 0; i < applications.length(); i++) {
+        DriApplication *application = applications.at(i);
+        QString *application_exec;
+        if (application->GetExecutable(&application_exec))
+            ret.append(*application_exec);
+    }
+    return ret;
 }
 
 bool DriDriver::AddApplication(DriApplication *application)
@@ -740,12 +833,26 @@ bool DriDriver::RemoveApplication(QString name) //TODO
 
 bool Drixml::getDriver(QString name, DriDriver **driver)
 {
+    if (name.isNull()) {
+        if (driver_all) {
+            *driver = driver_all;
+            return true;
+        } else
+            return false;
+    }
+    if (name == "loader") {
+        if (driver_loader) {
+            *driver = driver_loader;
+            return true;
+        } else
+            return false;
+    }
     for (int i = 0; i < drivers.length(); i++) {
         DriDriver *driver_current = drivers.at(i);
         QString *driver_name;
-        if ((!driver_current->GetName(&driver_name) &&
-            name.isNull()) ||
-            (name == *driver_name)) {
+        bool driver_name_is_null = !driver_current->GetName(&driver_name);
+        if ((driver_name_is_null && name.isNull()) ||
+            (!driver_name_is_null && name == *driver_name)) {
             *driver = driver_current;
             return true;
         }
@@ -765,6 +872,13 @@ void Drixml::addDriver(DriDriver *driver)
             driver_loader = driver;
         return;
     }
+    if (!hasname) {
+        if (driver_all)
+            DriDriver::Merge(driver_all, driver);
+        else
+            driver_all = driver;
+        return;
+    }
     DriDriver::insertList(&drivers, driver);
 }
 
@@ -779,8 +893,10 @@ bool Drixml::loadFile(QFile *file)
 bool Drixml::loadXML(QXmlStreamReader *xml)
 {
     if (xml->readNextStartElement()) {
-        if (xml->name() == "driconf" || xml->name() == "driinfo")
+        if (xml->name() == "driconf")
             loadDriConf(xml);
+        else if (xml->name() == "driinfo")
+            loadDriInfo(xml);
         else
             xml->raiseError(QObject::tr("not reading a driconf file"));
     }
@@ -800,9 +916,24 @@ void Drixml::loadDriConf(QXmlStreamReader *xml)
             else
                 driver_loader = driver;
         }
-        else if (xml->name() == "device")
+        else if (xml->name() == "device" && xml->attributes().hasAttribute("driver"))
             DriDriver::insertList(&drivers, new DriDriver(xml));
-        else if (xml->name() == "section")
+        else if (xml->name() == "device") {
+            DriDriver *driver = new DriDriver(xml);
+            if (driver_all)
+                DriDriver::Merge(driver_all, driver);
+            else
+                driver_all = driver;
+        }
+        else
+            xml->skipCurrentElement();
+    }
+}
+
+void Drixml::loadDriInfo(QXmlStreamReader *xml)
+{
+    while (xml->readNextStartElement()) {
+        if (xml->name() == "section")
             infos.append(new DriOptionsSectionInfo(xml));//perhaps do with insertList
         else
             xml->skipCurrentElement();
@@ -816,6 +947,11 @@ void Drixml::RemoveDriver(DriDriver *driver)
         delete driver_loader;
         return;
     }
+    if (driver_all == driver) {
+        driver_all = NULL;
+        delete driver_all;
+        return;
+    }
     drivers.removeAll(driver);
     return;
 }
@@ -826,6 +962,10 @@ void Drixml::RemoveDriver(QString name)
 
     if (name == "loader") {
         RemoveDriver(driver_loader);
+        return;
+    }
+    if (name.isNull()) {
+        RemoveDriver(driver_all);
         return;
     }
     if (Drixml::getDriver(name, &driver)) {
@@ -842,6 +982,8 @@ void Drixml::saveFile(QFile *file)
     xml.writeStartElement("driconf");
     if (driver_loader)
         driver_loader->save(&xml);
+    if (driver_all)
+        driver_all->save(&xml);
     for (int i = 0; i < drivers.length(); i++)
     {
         DriDriver *driver = drivers[i];
@@ -862,10 +1004,32 @@ bool Drixml::FindOptionInfo(QString name, DriOptionInfo **option)
     return false;
 }
 
+void Drixml::forgetInfo()
+{
+    infos.clear();
+}
+
+QList<QString> Drixml::GetOptionInfoNames()
+{
+    QList<QString> options_names;
+    for (int i = 0; i < infos.length(); i++)
+    {
+        DriOptionsSectionInfo *section = infos.at(i);
+        options_names.append(section->GetOptionNames());
+    }
+    qSort(options_names.begin(), options_names.end());
+    for (int i = options_names.length() - 1; i > 0; i--) {
+        if (options_names[i] == options_names[i-1])
+            options_names.removeAt(i);
+    }
+    return options_names;
+}
+
 
 Drixml::Drixml()
 {
     driver_loader = NULL;
+    driver_all = NULL;
     drivers.clear();
 }
 
@@ -879,16 +1043,3 @@ Drixml::~Drixml()
     //drivers.~QList();
 }
 
-
-/*int main(int argc, char *argv[])
-{
-    Drixml drixml = Drixml();
-    QFile *input = new QFile("/home/axel/.drirc");
-    QFile *output = new QFile("/home/axel/.drirc_copy");
-    input->open(QIODevice::ReadOnly);
-    output->open(QIODevice::WriteOnly);
-    drixml.loadFile(input);
-    drixml.saveFile(output);
-    output->flush();
-    return 0;
-}*/

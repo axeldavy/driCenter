@@ -36,7 +36,7 @@ ApplicationWindow {
     width: 640
     height: 480
     title: qsTr("DRI Center")
-    property variant currentCard: systemAnalysis.getCard(0)
+    property var currentCard: ""
 
     menuBar: MenuBar {
         Menu {
@@ -55,11 +55,12 @@ ApplicationWindow {
         ComboBox {
             id: delegateChooser
             model: cardmenu
+            textRole: "name"
             width: 150
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
             onCurrentIndexChanged: {
-                currentCard = systemAnalysis.getCard(currentIndex)
+                currentCard = cardmenu.get(currentIndex)
             }
         }
     }
@@ -108,7 +109,7 @@ ApplicationWindow {
         anchors.left: parent.left
         anchors.leftMargin: 206
         anchors.top: toolbar.bottom
-        anchors.topMargin: 0
+        anchors.topMargin: 30
         state: "Configure"
     }
 

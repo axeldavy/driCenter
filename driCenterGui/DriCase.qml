@@ -65,42 +65,6 @@ Rectangle {
         onClicked: {
             optionhelpwindow.opacity = 1
             optionhelpwindowtext.text = help
-//            if (button.hassubwindowhelp == 0) {
-//                var x = mainMouseArea.mouseX + applicationWindow1.x//button.x + windowContent.x + contentDri1.x + button.width
-//                var y = mainMouseArea.mouseY + applicationWindow1.y//button.y + windowContent.y + contentDri1.y + 1 + dricaserect.parent.y + dricaserect.height
-//                var newObject = Qt.createQmlObject(
-//                            "import QtQuick 2.0;
-//                             import QtQuick.Window 2.1;
-//                             Window{
-//                                 width:mytextrect.width;
-//                                 height:mytextrect.height;
-//                                 visible:true;
-//                                 flags:Qt.FramelessWindowHint;
-//                                 Rectangle {
-//                                     id: mytextrect
-//                                     width: mytext.width + 6
-//                                     height: mytext.height + 6
-//                                     border.width: 1
-//                                     border.color: \"dark gray\"
-//                                     radius: 5
-//                                     color: \"light gray\"
-//                                     Text{
-//                                        id: mytext;
-//                                        x: 3
-//                                        y: 3
-//                                        text:qsTr(\"fffffffffffffblabli\nblabli\")
-//                                     }
-//                                 }
-//                            }",
-//                            applicationWindow1, "subwindowhelp")
-//                newObject.x = x
-//                newObject.y = y
-//                subwindowhelp = newObject
-//                button.hassubwindowhelp = 1
-//            } else {
-//                subwindowhelp.destroy()
-//                button.hassubwindowhelp = 0
-//            }
         }
     }
 
@@ -162,6 +126,19 @@ Rectangle {
         width: 40
         height: 12
         onClicked: content = default_value
+    }
+
+    Button {
+        id: addOptionButton
+        text: "Add Custom"
+        x: 0.6 * parent.width
+        y: 30 - button.height / 2
+        width: 0.20 * parent.width
+        opacity: 0
+        enabled: false
+        onClicked: {
+            drimodel.append(name, default_value)
+        }
     }
 
     CheckBox {
@@ -248,6 +225,33 @@ Rectangle {
                 target: checkBox
                 enabled: true
                 opacity: 1
+            }
+        },
+        State {
+            name: "UnEditable"
+
+            PropertyChanges {
+                target: button
+                enabled: (help == "???") ? false : true
+                opacity: 1
+            }
+
+            PropertyChanges {
+                target: addOptionButton
+                enabled: true
+                opacity: 1
+            }
+
+            PropertyChanges {
+                target: resetbutton
+                enabled: false
+                opacity: 0
+            }
+
+            PropertyChanges {
+                target: deletebutton
+                enabled: false
+                opacity: 0
             }
         }
     ]

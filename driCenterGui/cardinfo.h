@@ -29,33 +29,9 @@
 #include <QObject>
 #include <QAbstractListModel>
 #include <QStringList>
-
-/* CardInfo is the class containing
- * all the specific information
- * about a gpu.
- */
-
-class CardInfo : public QObject
-{
-    Q_OBJECT
-public:
-    CardInfo(QObject* parent = 0);
-    void fillInfo(const QString &pci_id);
-    bool getPlaforms(QString* &platforms, char &numPlatforms);
-    Q_INVOKABLE QString getName();
-    Q_INVOKABLE QString getPciId();
-    Q_INVOKABLE QString getEGLInfo();
-private:
-    void fillGLXInfo();
-    void fillEGLInfo();
-    QString m_glx_info;
-    QString m_egl_info;
-    QString m_pci_id;
-    QString m_name;
-
-};
-Q_DECLARE_METATYPE(CardInfo*)
-
+extern "C" {
+#include "system.h"
+}
 /* CardModel is used to define a model
  * for ListView so we can select between
  * different gpus
@@ -66,23 +42,33 @@ class CardModel : public QAbstractListModel
     Q_OBJECT
 public:
     enum CardRoles {
-        NameRole = Qt::UserRole + 1
+        NameRole = Qt::UserRole + 1,
+        IDRole,
+        DriverNameRole,
+        DrmRole,
+        X11Role,
+        WaylandRole
     };
 
     CardModel(QObject *parent = 0);
     virtual ~CardModel();
 
-    void addCard(CardInfo* card);
-
     int rowCount(const QModelIndex & parent = QModelIndex()) const;
 
+    Q_INVOKABLE int numCards() const;
+
     QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
+
+    Q_INVOKABLE QVariant get(int row);
+    QList<QString> getIDList();
+    QList<QString> getDriverList();
 
 protected:
     QHash<int, QByteArray> roleNames() const;
 private:
-    QList<CardInfo*> m_cards;
+    struct system_info *system_info;
 
+    QVariant GetTableForDisplay(display_system_info *display_info) const;
 };
 
 #endif // CARDINFO_H

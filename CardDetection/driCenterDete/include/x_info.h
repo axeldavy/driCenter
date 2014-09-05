@@ -23,37 +23,19 @@
  * SOFTWARE.
  */
 
-#include <QApplication>
-#include <QQmlApplicationEngine>
+#ifndef X_INFO_H
+#define X_INFO_H
 
-#include <QGuiApplication>
-#include <qqmlengine.h>
-#include <qqmlcontext.h>
-#include <qqml.h>
-#include <QtQuick/qquickitem.h>
-#include <QtQuick/qquickview.h>
+#include <X11/Xlib.h>
 
-#include "systemanalysis.h"
-#include "cardinfo.h"
-#include "drimodel.h"
+#include "display_system.h"
 
-int main(int argc, char *argv[])
-{
-    QApplication app(argc, argv);
+struct x_info {
+    Display *display;
+};
 
-    CardModel model;
-    SystemAnalysis system;
-    DriModel drimodel;
-    for (int i=0; i<system.getCardsNumber();i++)
-        model.addCard(system.getCard(i));
+bool x_get_display_var(struct display_system_info *display_system_info, void **display);
+void free_x_info(struct display_system_info *display_system_info);
+void fill_x_info(struct display_system_info *display_system_info);
 
-    QQmlApplicationEngine engine;
-    QQmlContext *ctxt = engine.rootContext();
-    qRegisterMetaType<CardInfo*>();
-    ctxt->setContextProperty("cardmenu", &model);
-    ctxt->setContextProperty("systemAnalysis", &system);
-    ctxt->setContextProperty("drimodel", &drimodel);
-    engine.load(QUrl(QStringLiteral("qrc:///main.qml")));
-
-    return app.exec();
-}
+#endif /* X_INFO_H */

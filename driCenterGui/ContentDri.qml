@@ -35,8 +35,76 @@ Rectangle {
     implicitHeight: 400
     anchors.fill: parent
 
+    ListModel {
+        id: appNames
+        ListElement { text: "All Apps" }
+        ListElement { text: "Add New" }
+    }
+
+    ListModel {
+        id: appExecs
+        ListElement { text: "All Apps" }
+        ListElement { text: "Add New" }
+    }
+
+    ComboBox {
+        id: comboBox2
+        anchors.left: parent.left
+        anchors.leftMargin: 3
+        model: appNames
+        y: 18
+        onCurrentIndexChanged: {
+            if (currentIndex == count - 1) {
+                var newComponent = Qt.createComponent("AddAppWindow.qml")
+                var windownewapp = newComponent.createObject()
+                currentIndex = 0
+            }
+            drimodel.application_name = appNames.get(currentIndex).text
+            drimodel.application_exec = appExecs.get(currentIndex).text
+        }
+    }
+
+    ComboBox {
+        id: comboBox1
+        anchors.right: parent.right
+        anchors.rightMargin: 3
+        model: {
+            var list = ["All"]
+            var i;
+            for (i = 0; i < cardmenu.numCards(); i++)
+                list.push(cardmenu.get(i).driver_name)
+            return list
+        }
+        y: 18
+        onCurrentIndexChanged: {
+            drimodel.driver = model[currentIndex]
+            var app_names = drimodel.getApplicationNames();
+            var app_execs = drimodel.getApplicationExecs();
+            var i;
+            if (appNames.count > 2) {
+                appNames.clear()
+                appExecs.clear()
+                appNames.insert(0, {"text": "Add New"})
+                appExecs.insert(0, {"text": "Add New"})
+                appNames.insert(0, {"text": "All Apps"})
+                appExecs.insert(0, {"text": "All Apps"})
+                comboBox2.currentIndex = 0
+            }
+            for (i = 0; i < app_names.length; i++) {
+                appNames.insert(i+1, {"text": app_names[i]})
+                appExecs.insert(i+1, {"text": app_execs[i]})
+            }
+        }
+    }
+
     Item {
+        x: 29
+        y: 58
         anchors.fill: parent
+        anchors.bottomMargin: 15
+        anchors.leftMargin: 17
+        anchors.rightMargin: 8
+        anchors.topMargin: 64
         ScrollView {
             anchors.fill: parent
             ListView {
@@ -49,7 +117,7 @@ Rectangle {
                         width: parent.width
                         DriCase {
                             id: dricase
-                            state: optionstate
+                            state: optionsection != "Driver options" ? optionstate : "UnEditable"
                             name: optionname
                             content: optioncontent
                             help: optionhelp
@@ -117,6 +185,21 @@ Rectangle {
                         }
                     }
                 }
+                section.property: "optionsection"
+                section.criteria: ViewSection.FullString
+                section.delegate:
+                    Rectangle {
+                        id: sectionrect
+                        height: 60
+                        width: optionlist.width
+                        Text {
+                            id: sectiontext
+                            x: (sectionrect.width - sectiontext.width)/2
+                            y: (sectionrect.height - sectiontext.height)/2
+                            text: section
+                        }
+                    }
+                section.labelPositioning: ViewSection.InlineLabels
             }
         }
     }

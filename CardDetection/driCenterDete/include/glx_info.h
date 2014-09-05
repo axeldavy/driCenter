@@ -23,26 +23,33 @@
  * SOFTWARE.
  */
 
-#ifndef SYSTEMANALYSIS_H
-#define SYSTEMANALYSIS_H
+#ifndef GLX_INFO_H
+#define GLX_INFO_H
 
-#include "cardinfo.h"
+#include <GL/glx.h>
+#include <GL/glxext.h>
 
-/* SystemAnalysis is the class
- * that analyses the system
- * configuration (cpu, gpu, etc)
- */
+#include "misc.h"
+#include "gl_info.h"
+#include "display_system.h"
 
-class SystemAnalysis : public QObject
-{
-    Q_OBJECT
-public:
-    SystemAnalysis();
-    Q_INVOKABLE CardInfo* getCard(int num);
-    Q_INVOKABLE int getCardsNumber();
-private:
-    void addCard(const QString &pci_id);
-    QList<CardInfo*> m_cards;
+
+struct glx_info {
+    struct gl_info base_compatibility;
+    struct gl_info base_core;
+    bool has_core;
+    Display *dpy;
+    int major;
+    int minor;
+    char *glx_extensions_string;
+//    char *glx_vendor_string;
+//    char *glx_version_string;
+    int num_configs;
 };
 
-#endif // SYSTEMANALYSIS_H
+void free_glx_info(struct display_system_info *display_system_info);
+void fill_glx_info(struct display_system_info *display_system_info);
+char *glx_get_gl_renderer(struct glx_info *glx_info);
+bool glx_info_similar(struct glx_info *first, struct glx_info *second);
+
+#endif /* GLX_INFO_H */

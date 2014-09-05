@@ -34,8 +34,19 @@ class DriModel : public QAbstractListModel
 {
     Q_OBJECT
     QString driver_name;
+    QList<QString> driver_list;
     QString application_name;
+    QString application_executable;
+    DriDriver *driver;
+    DriApplication *application;
     Drixml *drixml;
+    QList<QString> *known_application_options;
+    QList<QString> *unknown_application_options;
+    QList<QString> *additional_options;
+private:
+    void ApplicationOrDriverModified();
+    QString GetDefaultValueForOption(QString name) const;
+    void GetOptionData(int index, QString *name, QString *value, DriOptionInfo **option_info, OptionType *option_type, QString *default_value) const;
 public:
     enum DriRoles {
         NameRole = Qt::UserRole + 1,
@@ -43,9 +54,13 @@ public:
         HelpRole,
         StateRole,
         EnumRole,
-        DefaultRole
+        DefaultRole,
+        SectionRole
     };
     explicit DriModel(QObject *parent = 0);
+    Drixml *getDrixml() {
+        return drixml;
+    }
     QVariant data(const QModelIndex &index, int role) const;
     int rowCount(const QModelIndex &parent = QModelIndex()) const;
     QVariant headerData(int section, Qt::Orientation orientation,
@@ -56,12 +71,18 @@ public:
     Q_INVOKABLE void append(QString name, QString value);
     Q_INVOKABLE void remove(QString name);
     void save(QString filename);
+    Q_INVOKABLE QList<QString> getApplicationNames();
+    Q_INVOKABLE QList<QString> getApplicationExecs();
+    void setDriverList(QList<QString> driver_list);
     QString getDriver();
     void setDriver(QString driver);
-    QString getApplication();
-    void setApplication(QString application);
+    QString getApplicationName();
+    void setApplicationName(QString applicationName);
+    QString getApplicationExec();
+    void setApplicationExec(QString applicationExec);
     Q_PROPERTY(QString driver READ getDriver WRITE setDriver)
-    Q_PROPERTY(QString application READ getApplication WRITE setApplication)
+    Q_PROPERTY(QString application_name READ getApplicationName WRITE setApplicationName)
+    Q_PROPERTY(QString application_exec READ getApplicationExec WRITE setApplicationExec)
 
 protected:
     QHash<int, QByteArray> roleNames() const;

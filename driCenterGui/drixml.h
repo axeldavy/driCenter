@@ -46,7 +46,7 @@ public:
     QString text;
     QList<EnumLangInfo *> enum_info;
     DescriptionLangInfo(QXmlStreamReader *xml);
-    QList<QString> GetEnumMenu();
+    QList<QString> GetEnumMenu(int min_valid, int max_valid);
 };
 
 enum OptionType { OptionBool, OptionEnum, OptionString, OptionInt };
@@ -119,14 +119,14 @@ public:
     ~DriApplication();
     static void insertList(QList<DriApplication *> *applications, DriApplication *application);
     static void RemoveFromList(QList<DriApplication *> *applications, DriApplication *application);
-    static void RemoveFromList(QList<DriApplication *> *applications, QString name);
+    static void RemoveFromList(QList<DriApplication *> *applications, QString executable);
     static void MergeLists(QList<DriApplication *> *applications, QList<DriApplication *> *new_applications);
     // Manipulation
     bool GetName(QString **name);
     bool GetExecutable(QString **executable);
     bool GetOption(QString name, DriOptionValue **option);
     QList<DriOptionValue> *GetOptions();
-    void GetOptionsMatch(QList<QString> options_names, QList<DriOptionValue> **matches, QList<DriOptionValue> **non_matches);
+    void GetOptionsMatch(QList<QString> options_names, QList<QString> **matches, QList<QString> **non_matches, QList<QString> **remaining);
     int count();
     bool AddOption(DriOptionValue *option);
     bool RemoveOption(DriOptionValue *option);
@@ -153,11 +153,12 @@ public:
     // Manipulation
     bool GetName(QString **name);
     bool GetScreen(int *screen);
-    bool GetApplication(QString name, DriApplication **application);
+    bool GetApplication(QString executable, DriApplication **application);
+    QList<QString> GetApplicationsNames();
+    QList<QString> GetApplicationsExecutables();
     bool AddApplication(DriApplication *application);
     bool RemoveApplication(DriApplication *application);
     bool RemoveApplication(QString name);
-
 };
 
 class Drixml
@@ -165,8 +166,10 @@ class Drixml
 private:
     QList<DriDriver *> drivers;
     DriDriver * driver_loader;
+    DriDriver * driver_all;
     QList<DriOptionsSectionInfo *> infos;
     void loadDriConf(QXmlStreamReader *xml);
+    void loadDriInfo(QXmlStreamReader *xml);
 
 public:
     Drixml();
@@ -179,6 +182,8 @@ public:
     void RemoveDriver(QString name);
     void saveFile(QFile *file);
     bool FindOptionInfo(QString name, DriOptionInfo **option);
+    void forgetInfo();
+    QList<QString> GetOptionInfoNames();
 };
 
 #endif // DRIXML_H
